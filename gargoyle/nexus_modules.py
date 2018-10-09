@@ -243,6 +243,7 @@ class GargoyleModule(nexus.NexusModule):
         condition_set_id = request.POST.get("id")
         field_name = request.POST.get("field")
         exclude = int(request.POST.get("exclude") or 0)
+        is_ab_test = int(request.POST.get("is_ab_test") or 0)
 
         if not all([key, condition_set_id, field_name]):
             raise GargoyleException("Fields cannot be empty")
@@ -251,7 +252,7 @@ class GargoyleModule(nexus.NexusModule):
         value = field.validate(request.POST)
 
         switch = gargoyle[key]
-        switch.add_condition(condition_set_id, field_name, value, exclude=exclude)
+        switch.add_condition(condition_set_id, field_name, value, exclude=exclude, is_ab_test=is_ab_test)
 
         logger.info('Condition added to %r (%r, %s=%r, exclude=%r)' % (switch.key,
                     condition_set_id, field_name, value, bool(exclude)))

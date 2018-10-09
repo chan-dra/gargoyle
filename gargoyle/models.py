@@ -14,7 +14,7 @@ from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
-from .constants import DISABLED, EXCLUDE, GLOBAL, INCLUDE, INHERIT, SELECTIVE
+from .constants import DISABLED, EXCLUDE, GLOBAL, INCLUDE, INHERIT, SELECTIVE, AB_TEST_ENABLED, AB_TEST_DISABLED
 
 
 class Switch(models.Model):
@@ -118,7 +118,7 @@ class Switch(models.Model):
 
         return data
 
-    def add_condition(self, manager, condition_set, field_name, condition, exclude=False, commit=True):
+    def add_condition(self, manager, condition_set, field_name, condition, exclude=False, commit=True, is_ab_test=False):
         """
         Adds a new condition and registers it in the global ``gargoyle`` switch manager.
 
@@ -139,7 +139,11 @@ class Switch(models.Model):
         if field_name not in self.value[namespace]:
             self.value[namespace][field_name] = []
         if condition not in self.value[namespace][field_name]:
-            self.value[namespace][field_name].append((exclude and EXCLUDE or INCLUDE, condition))
+            self.value[namespace][field_name].append((
+                exclude and EXCLUDE or INCLUDE,
+                condition,
+                is_ab_test and AB_TEST_ENABLED or AB_TEST_DISABLED
+            ))
 
         if commit:
             self.save()

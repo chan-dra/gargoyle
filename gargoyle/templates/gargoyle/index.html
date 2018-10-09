@@ -239,6 +239,7 @@
                     <form action="" method="get" data-switch="{{ id }}" data-field="{{ field.name }}">
                         {{ field|render_field }}
                         <label><input type="checkbox" name="exclude" value="1"/> Exclude</label>
+                        <label><input type="checkbox" name="is_ab_test" value="1"/> A/B Test</label>
                         <button type="submit" class="small button">Add</button>
                         {% if field.help_text %}
                             <div class="helptext">{{ field.help_text }}</div>
