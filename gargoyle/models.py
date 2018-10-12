@@ -101,7 +101,7 @@ class Switch(models.Model):
         }
 
         last = None
-        for condition_set_id, group, field, value, exclude in self.get_active_conditions(manager):
+        for condition_set_id, group, field, value, exclude, is_ab_test in self.get_active_conditions(manager):
             if not last or last['id'] != condition_set_id:
                 if last:
                     data['conditions'].append(last)
@@ -112,7 +112,7 @@ class Switch(models.Model):
                     'conditions': [],
                 }
 
-            last['conditions'].append((field.name, value, field.display(value), exclude))
+            last['conditions'].append((field.name, value, field.display(value), exclude, is_ab_test))
         if last:
             data['conditions'].append(last)
 
@@ -229,7 +229,10 @@ class Switch(models.Model):
                 for name, field in six.iteritems(condition_set.fields):
                     for value in self.value[ns].get(name, []):
                         try:
-                            yield condition_set_id, group, field, value[1], value[0] == EXCLUDE
+                            cond_excludes = value[0] == EXCLUDE
+                            cond_value = value[1]
+                            cond_is_ab_test = True if len(value) > 2 and value[2] == AB_TEST_ENABLED else False
+                            yield condition_set_id, group, field, cond_value, cond_excludes, cond_is_ab_test
                         except TypeError:
                             continue
 

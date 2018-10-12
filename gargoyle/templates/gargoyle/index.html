@@ -64,8 +64,11 @@
                         {% for group in switch.conditions %}
                             <div class="group">
                                 <label>{{ group.label }}</label>
-                                {% for field, value, display, is_exclude in group.conditions %}
-                                    <span data-switch="{{ group.id }}" data-field="{{ field }}" data-value="{{ value }}" class="value">
+                                {% for field, value, display, is_exclude, is_ab_test in group.conditions %}
+                                  {%  if is_ab_test %}
+                                    <span style="background: green" class="value">A/B TEST</span>
+                                  {% endif %}
+                                  <span data-switch="{{ group.id }}" data-field="{{ field }}" data-value="{{ value }}" class="value">
                                         <nobr>{% if is_exclude %}<strong>not</strong> {% endif %}{{ display }}
                                             <a href="#" class="delete-condition" title="Delete this condition">
                                               <img src="{% url 'nexus:media' 'gargoyle' 'img/delete.png' %}">
