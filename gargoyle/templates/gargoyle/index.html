@@ -174,6 +174,9 @@
                                 <div class="group">
                                     <label>{{>label}}</label>
                                     {{for conditions}}
+                                        {{if #data[4]}}
+                                          <span style="background: green" class="value">A/B TEST</span>
+                                        {{/if}}
                                         <span data-switch="{{>#parent.parent.data.id}}" data-field="{{>#data[0]}}" data-value="{{>#data[1]}}" class="value">
                                             <nobr>{{if #data[3]}}<strong>not</strong>{{/if}} {{>#data[2]}}
                                               <a href="#" class="delete-condition" title="Delete this condition">
