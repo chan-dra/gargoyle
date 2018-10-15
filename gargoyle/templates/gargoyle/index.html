@@ -64,8 +64,9 @@
                         {% for group in switch.conditions %}
                             <div class="group">
                                 <label>{{ group.label }}</label>
-                                {% for field, value, display, is_exclude, is_ab_test in group.conditions %}
-                                  {%  if is_ab_test %}
+                                {% for field, value, display, is_exclude, type_ in group.conditions %}
+                                    {{  type_ }}
+                                  {%  if type_ == 't' %}
                                     <span style="background: green" class="value">A/B TEST</span>
                                   {% endif %}
                                   <span data-switch="{{ group.id }}" data-field="{{ field }}" data-value="{{ value }}" class="value">
@@ -174,7 +175,7 @@
                                 <div class="group">
                                     <label>{{>label}}</label>
                                     {{for conditions}}
-                                        {{if #data[4]}}
+                                        {{if #data[4]=='t'}}
                                           <span style="background: green" class="value">A/B TEST</span>
                                         {{/if}}
                                         <span data-switch="{{>#parent.parent.data.id}}" data-field="{{>#data[0]}}" data-value="{{>#data[1]}}" class="value">

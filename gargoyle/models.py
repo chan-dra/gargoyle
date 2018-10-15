@@ -14,7 +14,7 @@ from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
-from .constants import DISABLED, EXCLUDE, GLOBAL, INCLUDE, INHERIT, SELECTIVE, AB_TEST_ENABLED, AB_TEST_DISABLED
+from .constants import DISABLED, EXCLUDE, GLOBAL, INCLUDE, INHERIT, SELECTIVE, TYPE_FEATURE
 
 
 class Switch(models.Model):
@@ -101,7 +101,7 @@ class Switch(models.Model):
         }
 
         last = None
-        for condition_set_id, group, field, value, exclude, is_ab_test in self.get_active_conditions(manager):
+        for condition_set_id, group, field, value, exclude, type_ in self.get_active_conditions(manager):
             if not last or last['id'] != condition_set_id:
                 if last:
                     data['conditions'].append(last)
@@ -112,13 +112,14 @@ class Switch(models.Model):
                     'conditions': [],
                 }
 
-            last['conditions'].append((field.name, value, field.display(value), exclude, is_ab_test))
+            last['conditions'].append((field.name, value, field.display(value), exclude, type_))
         if last:
             data['conditions'].append(last)
 
         return data
 
-    def add_condition(self, manager, condition_set, field_name, condition, exclude=False, commit=True, is_ab_test=False):
+    def add_condition(self, manager, condition_set, field_name, condition, exclude=False, commit=True,
+                      type_=TYPE_FEATURE):
         """
         Adds a new condition and registers it in the global ``gargoyle`` switch manager.
 
@@ -142,7 +143,7 @@ class Switch(models.Model):
             self.value[namespace][field_name].append((
                 exclude and EXCLUDE or INCLUDE,
                 condition,
-                is_ab_test and AB_TEST_ENABLED or AB_TEST_DISABLED
+                type_,
             ))
 
         if commit:
@@ -229,10 +230,10 @@ class Switch(models.Model):
                 for name, field in six.iteritems(condition_set.fields):
                     for value in self.value[ns].get(name, []):
                         try:
-                            cond_excludes = value[0] == EXCLUDE
-                            cond_value = value[1]
-                            cond_is_ab_test = True if len(value) > 2 and value[2] == AB_TEST_ENABLED else False
-                            yield condition_set_id, group, field, cond_value, cond_excludes, cond_is_ab_test
+                            excludes = value[0] == EXCLUDE
+                            data = value[1]
+                            type_ = value[2] if len(value) > 2 else TYPE_FEATURE
+                            yield condition_set_id, group, field, data, excludes, type_
                         except TypeError:
                             continue
 
