@@ -14,7 +14,7 @@ from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
-from .constants import DISABLED, EXCLUDE, GLOBAL, INCLUDE, INHERIT, SELECTIVE, TYPE_FEATURE
+from .constants import DISABLED, EXCLUDE, GLOBAL, INCLUDE, INHERIT, SELECTIVE, FEATURE
 
 
 class Switch(models.Model):
@@ -119,7 +119,7 @@ class Switch(models.Model):
         return data
 
     def add_condition(self, manager, condition_set, field_name, condition, exclude=False, commit=True,
-                      type_=TYPE_FEATURE):
+                      type_=FEATURE):
         """
         Adds a new condition and registers it in the global ``gargoyle`` switch manager.
 
@@ -232,7 +232,7 @@ class Switch(models.Model):
                         try:
                             excludes = value[0] == EXCLUDE
                             data = value[1]
-                            type_ = value[2] if len(value) > 2 else TYPE_FEATURE
+                            type_ = value[2] if len(value) > 2 else FEATURE
                             yield condition_set_id, group, field, data, excludes, type_
                         except TypeError:
                             continue

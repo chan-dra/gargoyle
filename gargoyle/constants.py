@@ -11,6 +11,6 @@ EXCLUDE = 'e'
 AB_TEST_ENABLED = 'ab_test_enabled'
 AB_TEST_DISABLED = 'ab_test_disabled'
 
-# Condition type
-TYPE_FEATURE ='f'
-TYPE_AB_TEST ='t'
+# Condition types
+FEATURE = 'f'
+AB_TEST = 't'

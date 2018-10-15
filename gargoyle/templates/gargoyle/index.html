@@ -65,7 +65,6 @@
                             <div class="group">
                                 <label>{{ group.label }}</label>
                                 {% for field, value, display, is_exclude, type_ in group.conditions %}
-                                    {{  type_ }}
                                   {%  if type_ == 't' %}
                                     <span style="background: green" class="value">A/B TEST</span>
                                   {% endif %}
