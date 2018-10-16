@@ -16,6 +16,7 @@ from django.http import HttpRequest
 from django.utils import six
 from django.utils.html import format_html
 
+from gargoyle.constants import FEATURE, AB_TEST
 from gargoyle.models import EXCLUDE
 
 
@@ -280,34 +281,54 @@ class ConditionSet(six.with_metaclass(ConditionSetBase)):
             value = value()
         return value
 
-    def has_active_condition(self, conditions, instances):
+    def has_active_condition(self, conditions, instances, type_=FEATURE):
         """
         Given a list of instances, and the conditions active for
         this switch, returns a boolean reprsenting if any
         conditional is met, including a non-instance default.
         """
         return_value = None
+
         for instance in itertools.chain(instances, [None]):
             if not self.can_execute(instance):
                 continue
-            result = self.is_active(instance, conditions)
+
+            # This "if" is to keep backwards compatibility.
+            # If 'is_active' has been extended before adding AB_TEST capabilities it doesn't have the parameter type_.
+            # All conditions created before AB_TEST default to FEATURE.
+            if type_ == FEATURE:
+                result = self.is_active(instance, conditions)
+            else:
+                result = self.is_active(instance, conditions, type_)
+
             if result is False:
                 return False
             elif result is True:
                 return_value = True
         return return_value
 
-    def is_active(self, instance, conditions):
+    def is_active(self, instance, conditions, type_=FEATURE):
         """
         Given an instance, and the conditions active for this switch, returns
         a boolean representing if the feature is active.
+
+        Conditions with type different from type_ are ignored.
+        Example:
+          We want to check if a ConditionSet has some condition active for AB_TEST.
+          In this case all the conditions with type FEATURE are ignored.
         """
         return_value = None
         for name, field in six.iteritems(self.fields):
             field_conditions = conditions.get(self.get_namespace(), {}).get(name)
             if field_conditions:
                 value = self.get_field_value(instance, name)
-                for status, condition in field_conditions:
+                for field_condition in field_conditions:
+                    if len(field_condition) < 3:
+                        field_condition = (*field_condition, FEATURE)
+                    status, condition, cond_type = field_condition
+
+                    if type_ != cond_type:  # Ignore condition with different type
+                        continue
                     exclude = status == EXCLUDE
                     if field.is_active(condition, value):
                         if exclude:

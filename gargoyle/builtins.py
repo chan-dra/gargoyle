@@ -18,6 +18,7 @@ from django.core.validators import validate_ipv4_address
 from django.utils import timezone
 
 from gargoyle import gargoyle
+from gargoyle.constants import FEATURE
 from gargoyle.conditions import (
     BeforeDate, Boolean, ConditionSet, ModelConditionSet, OnOrAfterDate, Percent, RequestConditionSet, String,
 )
@@ -37,13 +38,13 @@ class UserConditionSet(ModelConditionSet):
     def can_execute(self, instance):
         return isinstance(instance, (User, AnonymousUser))
 
-    def is_active(self, instance, conditions):
+    def is_active(self, instance, conditions, type_=FEATURE):
         """
         value is the current value of the switch
         instance is the instance of our type
         """
         if isinstance(instance, User):
-            return super(UserConditionSet, self).is_active(instance, conditions)
+            return super(UserConditionSet, self).is_active(instance, conditions, type_)
 
         # HACK: allow is_authenticated to work on AnonymousUser
         condition = conditions.get(self.get_namespace(), {}).get('is_anonymous')

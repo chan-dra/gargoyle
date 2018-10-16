@@ -219,7 +219,7 @@ class Switch(models.Model):
         """
         Returns a generator which yields groups of lists of conditions.
 
-        >>> for label, set_id, field, value, exclude in gargoyle.get_all_conditions():
+        >>> for label, set_id, field, value, exclude, type_ in gargoyle.get_all_conditions():
         >>>     print("%(label)s: %(field)s = %(value)s (exclude: %(exclude)s)" % (label, field.label, value, exclude))
         """
         for condition_set in sorted(manager.get_condition_sets(), key=lambda x: x.get_group_label()):

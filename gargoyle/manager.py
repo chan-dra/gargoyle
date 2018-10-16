@@ -9,7 +9,7 @@ from modeldict import ModelDict
 
 from gargoyle.proxy import SwitchProxy
 
-from .constants import DISABLED, EXCLUDE, GLOBAL, INCLUDE, INHERIT, SELECTIVE
+from .constants import DISABLED, EXCLUDE, GLOBAL, INCLUDE, INHERIT, SELECTIVE, FEATURE
 
 
 class SwitchManager(ModelDict):
@@ -44,6 +44,7 @@ class SwitchManager(ModelDict):
         >>> gargoyle.is_active('my_feature', request)
         """
         default = kwargs.pop('default', False)
+        type_ = kwargs.pop('type_', FEATURE)
 
         # Check all parents for a disabled state
         parts = key.split(':')
@@ -86,7 +87,7 @@ class SwitchManager(ModelDict):
         return_value = False
 
         for switch in six.itervalues(self._registry):
-            result = switch.has_active_condition(conditions, instances)
+            result = switch.has_active_condition(conditions, instances, type_=type_)
             if result is False:
                 return False
             elif result is True:

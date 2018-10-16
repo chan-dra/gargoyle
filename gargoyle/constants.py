@@ -8,9 +8,6 @@ INHERIT = 4
 INCLUDE = 'i'
 EXCLUDE = 'e'
 
-AB_TEST_ENABLED = 'ab_test_enabled'
-AB_TEST_DISABLED = 'ab_test_disabled'
-
 # Condition types
 FEATURE = 'f'
 AB_TEST = 't'
