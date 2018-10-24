@@ -40,17 +40,19 @@ class UserConditionSet(ModelConditionSet):
 
     def is_active(self, instance, conditions, type_=FEATURE):
         """
-        value is the current value of the switch
-        instance is the instance of our type
+        If is AnonymousUser we only check the value of the switch.
+        Otherwise we call the parent's `is_active` method to validate the 'is_anonymous' field.
         """
-        if isinstance(instance, User):
-            return super(UserConditionSet, self).is_active(instance, conditions, type_)
+        if isinstance(instance, AnonymousUser):
+            conditions = conditions.get(self.get_namespace(), {}).get('is_anonymous')
+            for condition in conditions:
+                value = condition[1]
+                if condition:
+                    return bool(value)
+            return None
 
-        # HACK: allow is_authenticated to work on AnonymousUser
-        condition = conditions.get(self.get_namespace(), {}).get('is_anonymous')
-        if condition is not None:
-            return bool(condition)
-        return None
+        return super(UserConditionSet, self).is_active(instance, conditions, type_)
+
 
 
 gargoyle.register(UserConditionSet(User))
