@@ -14,6 +14,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 from gargoyle.builtins import IPAddressConditionSet, UserConditionSet
+from gargoyle.constants import AB_TEST, FEATURE
 from gargoyle.decorators import switch_is_active
 from gargoyle.manager import SwitchManager
 from gargoyle.models import DISABLED, GLOBAL, INHERIT, SELECTIVE, Switch
@@ -203,6 +204,30 @@ class APITest(TestCase):
         # username=='bar', so should not be active
         user = User(pk=0, username='bar', is_staff=True)
         assert not self.gargoyle.is_active('test', user)
+
+    def test_ab_test(self):
+        condition_set = 'gargoyle.builtins.UserConditionSet(auth.user)'
+
+        Switch.objects.create(key='test', status=SELECTIVE)
+        switch = self.gargoyle['test']
+
+        # Intent is that this condition is True for all users *except* if the
+        # username == bar
+        switch.add_condition(
+            condition_set=condition_set,
+            field_name='username',
+            condition='bar',
+            exclude=False,
+            condition_type=AB_TEST,
+        )
+
+        user = User(pk=0, username='bar')
+        assert self.gargoyle.is_active('test', user) is False
+        assert self.gargoyle.is_active('test', user, flag_type=AB_TEST) is True
+
+        user = User(pk=0, username='foo')
+        assert self.gargoyle.is_active('test', user) is False
+        assert self.gargoyle.is_active('test', user, flag_type=AB_TEST) is False
 
     def test_decorator_for_user(self):
         condition_set = 'gargoyle.builtins.UserConditionSet(auth.user)'
@@ -550,11 +575,12 @@ class APITest(TestCase):
         assert len(condition['conditions']) == 1
 
         inner_condition = condition['conditions'][0]
-        assert len(inner_condition) == 4
+        assert len(inner_condition) == 5
         assert inner_condition[0] == 'ip_address'
         assert inner_condition[1] == '192.168.1.1'
         assert inner_condition[2] == '192.168.1.1'
         assert not inner_condition[3]
+        assert inner_condition[4] == 'f'
 
     def test_remove_condition(self):
         condition_set = 'gargoyle.builtins.UserConditionSet(auth.user)'
