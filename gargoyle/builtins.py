@@ -44,7 +44,7 @@ class UserConditionSet(ModelConditionSet):
         Otherwise we call the parent's `is_active` method to validate the 'is_anonymous' field.
         """
         if isinstance(instance, AnonymousUser):
-            conditions = conditions.get(self.get_namespace(), {}).get('is_anonymous')
+            conditions = conditions.get(self.get_namespace(), {}).get('is_anonymous', [])
             for condition in conditions:
                 value = condition[1]
                 if condition:
