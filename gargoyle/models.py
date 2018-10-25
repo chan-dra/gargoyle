@@ -101,7 +101,7 @@ class Switch(models.Model):
         }
 
         last = None
-        for condition_set_id, group, field, value, exclude, type_ in self.get_active_conditions(manager):
+        for condition_set_id, group, field, value, exclude, condition_type in self.get_active_conditions(manager):
             if not last or last['id'] != condition_set_id:
                 if last:
                     data['conditions'].append(last)
@@ -112,14 +112,14 @@ class Switch(models.Model):
                     'conditions': [],
                 }
 
-            last['conditions'].append((field.name, value, field.display(value), exclude, type_))
+            last['conditions'].append((field.name, value, field.display(value), exclude, condition_type))
         if last:
             data['conditions'].append(last)
 
         return data
 
     def add_condition(self, manager, condition_set, field_name, condition, exclude=False, commit=True,
-                      type_=FEATURE):
+                      condition_type=FEATURE):
         """
         Adds a new condition and registers it in the global ``gargoyle`` switch manager.
 
@@ -143,7 +143,7 @@ class Switch(models.Model):
             self.value[namespace][field_name].append((
                 exclude and EXCLUDE or INCLUDE,
                 condition,
-                type_,
+                condition_type,
             ))
 
         if commit:
@@ -219,7 +219,7 @@ class Switch(models.Model):
         """
         Returns a generator which yields groups of lists of conditions.
 
-        >>> for label, set_id, field, value, exclude, type_ in gargoyle.get_all_conditions():
+        >>> for label, set_id, field, value, exclude, condition_type in gargoyle.get_all_conditions():
         >>>     print("%(label)s: %(field)s = %(value)s (exclude: %(exclude)s)" % (label, field.label, value, exclude))
         """
         for condition_set in sorted(manager.get_condition_sets(), key=lambda x: x.get_group_label()):
@@ -232,8 +232,8 @@ class Switch(models.Model):
                         try:
                             excludes = value[0] == EXCLUDE
                             data = value[1]
-                            type_ = value[2] if len(value) > 2 else FEATURE
-                            yield condition_set_id, group, field, data, excludes, type_
+                            condition_type = value[2] if len(value) > 2 else FEATURE
+                            yield condition_set_id, group, field, data, excludes, condition_type
                         except TypeError:
                             continue
 

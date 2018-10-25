@@ -266,7 +266,7 @@ class UserConditionSetTests(TestCase):
     def _create_contition(self, name, condition):
         """
         :param name: string
-        :param condition: tuple (status, condition, [cond_type])
+        :param condition: tuple (status, condition, [condition_type])
         :return:
         """
         conditions = {}
@@ -381,29 +381,29 @@ class ConditionSetABTestTests(TestCase):
         instance = self._create_instance()
         instance.field_ab_test = True
         instance.field_feature = False
-        assert self.condition_set.is_active(instance, self.conditions, type_=AB_TEST) is True
-        assert not self.condition_set.is_active(instance, self.conditions, type_=FEATURE)
+        assert self.condition_set.is_active(instance, self.conditions, switch_type=AB_TEST) is True
+        assert not self.condition_set.is_active(instance, self.conditions, switch_type=FEATURE)
 
     def test_is_only_feature_enabled(self):
         instance = self._create_instance()
         instance.field_ab_test = False
         instance.field_feature = True
-        assert not self.condition_set.is_active(instance, self.conditions, type_=AB_TEST)
-        assert self.condition_set.is_active(instance, self.conditions, type_=FEATURE) is True
+        assert not self.condition_set.is_active(instance, self.conditions, switch_type=AB_TEST)
+        assert self.condition_set.is_active(instance, self.conditions, switch_type=FEATURE) is True
 
     def test_both_feature_and_ab_test_are_enabled(self):
         instance = self._create_instance()
         instance.field_ab_test = True
         instance.field_feature = True
-        assert self.condition_set.is_active(instance, self.conditions, type_=AB_TEST) is True
-        assert self.condition_set.is_active(instance, self.conditions, type_=FEATURE) is True
+        assert self.condition_set.is_active(instance, self.conditions, switch_type=AB_TEST) is True
+        assert self.condition_set.is_active(instance, self.conditions, switch_type=FEATURE) is True
 
     def test_neither_feature_nor_ab_test_are_enabled(self):
         instance = self._create_instance()
         instance.field_ab_test = False
         instance.field_feature = False
-        assert not self.condition_set.is_active(instance, self.conditions, type_=AB_TEST)
-        assert not self.condition_set.is_active(instance, self.conditions, type_=FEATURE)
+        assert not self.condition_set.is_active(instance, self.conditions, switch_type=AB_TEST)
+        assert not self.condition_set.is_active(instance, self.conditions, switch_type=FEATURE)
 
     def test_is_ab_test_enabled_with_some_ab_test_condition_disabled(self):
         condition_set = ConditionSet()
@@ -411,4 +411,4 @@ class ConditionSetABTestTests(TestCase):
         conditions = self._create_contitions({'field_1': [('i', True, AB_TEST), ('i', False, AB_TEST)]})
         instance = self._create_instance()
         instance.field_1 = True
-        assert condition_set.is_active(instance, conditions, type_=AB_TEST) is True
+        assert condition_set.is_active(instance, conditions, switch_type=AB_TEST) is True

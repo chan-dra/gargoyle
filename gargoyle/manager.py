@@ -44,7 +44,7 @@ class SwitchManager(ModelDict):
         >>> gargoyle.is_active('my_feature', request)
         """
         default = kwargs.pop('default', False)
-        type_ = kwargs.pop('type_', FEATURE)
+        flag_type = kwargs.pop('flag_type', FEATURE)
 
         # Check all parents for a disabled state
         parts = key.split(':')
@@ -87,7 +87,7 @@ class SwitchManager(ModelDict):
         return_value = False
 
         for switch in six.itervalues(self._registry):
-            result = switch.has_active_condition(conditions, instances, type_=type_)
+            result = switch.has_active_condition(conditions, instances, switch_type=flag_type)
             if result is False:
                 return False
             elif result is True:

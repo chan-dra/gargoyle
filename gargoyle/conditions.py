@@ -281,10 +281,10 @@ class ConditionSet(six.with_metaclass(ConditionSetBase)):
             value = value()
         return value
 
-    def has_active_condition(self, conditions, instances, type_=FEATURE):
+    def has_active_condition(self, conditions, instances, switch_type=FEATURE):
         """
         Given a list of instances, and the conditions active for
-        this switch, returns a boolean reprsenting if any
+        this switch and ``switch type``, returns a boolean representing if any
         conditional is met, including a non-instance default.
         """
         return_value = None
@@ -294,12 +294,12 @@ class ConditionSet(six.with_metaclass(ConditionSetBase)):
                 continue
 
             # This "if" is to keep backwards compatibility.
-            # If 'is_active' has been extended before adding AB_TEST capabilities it doesn't have the parameter type_.
+            # If 'is_active' has been extended before adding AB_TEST capabilities it doesn't have the parameter switch_type.
             # All conditions created before AB_TEST default to FEATURE.
-            if type_ == FEATURE:
+            if switch_type == FEATURE:
                 result = self.is_active(instance, conditions)
             else:
-                result = self.is_active(instance, conditions, type_)
+                result = self.is_active(instance, conditions, switch_type)
 
             if result is False:
                 return False
@@ -307,12 +307,12 @@ class ConditionSet(six.with_metaclass(ConditionSetBase)):
                 return_value = True
         return return_value
 
-    def is_active(self, instance, conditions, type_=FEATURE):
+    def is_active(self, instance, conditions, switch_type=FEATURE):
         """
         Given an instance, and the conditions active for this switch, returns
         a boolean representing if the feature is active.
 
-        Conditions with type different from type_ are ignored.
+        Conditions with type different from ``switch_type`` are ignored.
         Example:
           We want to check if a ConditionSet has some condition active for AB_TEST.
           In this case all the conditions with type FEATURE are ignored.
@@ -325,9 +325,9 @@ class ConditionSet(six.with_metaclass(ConditionSetBase)):
                 for field_condition in field_conditions:
                     if len(field_condition) < 3:
                         field_condition = (*field_condition, FEATURE)
-                    status, condition, cond_type = field_condition
+                    status, condition, condition_type = field_condition
 
-                    if type_ != cond_type:  # Ignore condition with different type
+                    if switch_type != condition_type:  # Ignore condition with no switch type
                         continue
                     exclude = status == EXCLUDE
                     if field.is_active(condition, value):

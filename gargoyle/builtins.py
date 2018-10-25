@@ -38,7 +38,7 @@ class UserConditionSet(ModelConditionSet):
     def can_execute(self, instance):
         return isinstance(instance, (User, AnonymousUser))
 
-    def is_active(self, instance, conditions, type_=FEATURE):
+    def is_active(self, instance, conditions, switch_type=FEATURE):
         """
         If is AnonymousUser we only check the value of the switch.
         Otherwise we call the parent's `is_active` method to validate the 'is_anonymous' field.
@@ -51,7 +51,7 @@ class UserConditionSet(ModelConditionSet):
                     return bool(value)
             return None
 
-        return super(UserConditionSet, self).is_active(instance, conditions, type_)
+        return super(UserConditionSet, self).is_active(instance, conditions, switch_type)
 
 
 
