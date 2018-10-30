@@ -64,7 +64,11 @@
                         {% for group in switch.conditions %}
                             <div class="group">
                                 <label>{{ group.label }}</label>
-                                {% for field, value, display, is_exclude in group.conditions %}
+                                <label>{{ group.label }}</label>
+                                {% for field, value, display, is_exclude, condition_type in group.conditions %}
+                                    {%  if condition_type == 't' %}
+                                        <span style="background: green" class="value">A/B TEST</span>
+                                    {% endif %}
                                     <span data-switch="{{ group.id }}" data-field="{{ field }}" data-value="{{ value }}" class="value">
                                         <nobr>{% if is_exclude %}<strong>not</strong> {% endif %}{{ display }}
                                             <a href="#" class="delete-condition" title="Delete this condition">
@@ -171,6 +175,9 @@
                                 <div class="group">
                                     <label>{{>label}}</label>
                                     {{for conditions}}
+                                        {{if #data[4]=='t'}}
+                                            <span style="background: green" class="value">A/B TEST</span>
+                                        {{/if}}
                                         <span data-switch="{{>#parent.parent.data.id}}" data-field="{{>#data[0]}}" data-value="{{>#data[1]}}" class="value">
                                             <nobr>{{if #data[3]}}<strong>not</strong>{{/if}} {{>#data[2]}}
                                               <a href="#" class="delete-condition" title="Delete this condition">
@@ -238,6 +245,7 @@
                 <div class="fields" data-path="{{ id }}.{{ field.name }}" style="display:none;">
                     <form action="" method="get" data-switch="{{ id }}" data-field="{{ field.name }}">
                         {{ field|render_field }}
+                        <label><input type="checkbox" name="is_ab_test" value="1"/>
                         <label><input type="checkbox" name="exclude" value="1"/> Exclude</label>
                         <button type="submit" class="small button">Add</button>
                         {% if field.help_text %}
