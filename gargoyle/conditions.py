@@ -307,7 +307,7 @@ class ConditionSet(six.with_metaclass(ConditionSetBase)):
             field_conditions = conditions.get(self.get_namespace(), {}).get(name)
             if field_conditions:
                 value = self.get_field_value(instance, name)
-                for status, condition in field_conditions:
+                for status, condition, condition_type in field_conditions:
                     exclude = status == EXCLUDE
                     if field.is_active(condition, value):
                         if exclude:

@@ -14,6 +14,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 from gargoyle.builtins import IPAddressConditionSet, UserConditionSet
+from gargoyle.constants import FEATURE
 from gargoyle.decorators import switch_is_active
 from gargoyle.manager import SwitchManager
 from gargoyle.models import DISABLED, GLOBAL, INHERIT, SELECTIVE, Switch
@@ -550,11 +551,12 @@ class APITest(TestCase):
         assert len(condition['conditions']) == 1
 
         inner_condition = condition['conditions'][0]
-        assert len(inner_condition) == 4
+        assert len(inner_condition) == 5
         assert inner_condition[0] == 'ip_address'
         assert inner_condition[1] == '192.168.1.1'
         assert inner_condition[2] == '192.168.1.1'
         assert not inner_condition[3]
+        assert inner_condition[4] == FEATURE
 
     def test_remove_condition(self):
         condition_set = 'gargoyle.builtins.UserConditionSet(auth.user)'

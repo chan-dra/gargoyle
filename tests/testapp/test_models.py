@@ -6,7 +6,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from gargoyle import gargoyle
-from gargoyle.constants import AB_TEST, FEATURE
+from gargoyle.constants import AB_TEST
 from gargoyle.models import Switch
 
 
