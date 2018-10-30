@@ -4,21 +4,22 @@ import datetime
 import socket
 
 import pytz
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, TestCase
 from django.test.utils import override_settings
 from django.utils import timezone
 from freezegun import freeze_time
-
 from gargoyle.builtins import (
-    ActiveTimezoneTodayConditionSet, AppTodayConditionSet, HostConditionSet, IPAddressConditionSet,
-    UTCTodayConditionSet,
+    ActiveTimezoneTodayConditionSet, AppTodayConditionSet, HostConditionSet,
+    IPAddressConditionSet, UTCTodayConditionSet, UserConditionSet,
 )
+from gargoyle.constants import INCLUDE
 from gargoyle.manager import SwitchManager
 from gargoyle.models import SELECTIVE, Switch
 
 
 class IPAddressConditionSetTests(TestCase):
-
     condition_set = 'gargoyle.builtins.IPAddressConditionSet'
 
     def setUp(self):
@@ -254,3 +255,97 @@ class ActiveTimezoneTodayConditionSetTests(TestCase):
     def test_no_use_tz_without_active(self):
         with freeze_time(self.server_dt_aware, tz_offset=self.server_tz_offset):
             assert self.condition_set.get_field_value(None, 'now_is_on_or_after') == self.server_dt
+
+
+class UserConditionSetTests(TestCase):
+    """ Regression tests (before adding AB_TEST) """
+
+    def _create_condition(self, name, condition):
+        """
+        :param name: string
+        :param condition: tuple (status, condition, [cond_type])
+        :return:
+        """
+        conditions = {}
+        namespace = self.condition_set.get_namespace()
+        conditions[namespace] = {}
+        conditions[namespace][name] = condition
+        return conditions
+
+    def setUp(self):
+        self.User = get_user_model()
+        self.condition_set = UserConditionSet(model=self.User)
+        self.date = datetime.date(year=2018, month=10, day=23)
+        self.yesterday = self.date - datetime.timedelta(days=1)
+        self.tomorrow = self.date + datetime.timedelta(days=1)
+        self.date_str = '2018-10-23'
+
+    def test_user_has_username(self):
+        conditions = self._create_condition('username', [(INCLUDE, 'test.user')])
+        user = self.User(username='test.user')
+        assert self.condition_set.is_active(user, conditions) is True
+
+    def test_user_doesnt_have_username(self):
+        conditions = self._create_condition('username', [(INCLUDE, 'test.user')])
+        user = self.User(username='another.user')
+        assert not self.condition_set.is_active(user, conditions)
+
+    def test_user_has_email(self):
+        conditions = self._create_condition('email', [(INCLUDE, 'test@email.com')])
+        user = self.User(email='test@email.com')
+        assert self.condition_set.is_active(user, conditions) is True
+
+    def test_user_doesnt_have_email(self):
+        conditions = self._create_condition('email', [(INCLUDE, 'test@email.com')])
+        user = self.User(email='another@email.com')
+        assert not self.condition_set.is_active(user, conditions)
+
+    def test_user_is_staff(self):
+        conditions = self._create_condition('is_staff', [(INCLUDE, True)])
+        user = self.User(is_staff=True)
+        assert self.condition_set.is_active(user, conditions) is True
+
+    def test_user_is_no_staff(self):
+        conditions = self._create_condition('is_staff', [(INCLUDE, True)])
+        user = self.User(is_staff=False)
+        assert not self.condition_set.is_active(user, conditions)
+
+    def test_user_is_superuser(self):
+        conditions = self._create_condition('is_superuser', [(INCLUDE, True)])
+        user = self.User(is_superuser=True)
+        assert self.condition_set.is_active(user, conditions) is True
+
+    def test_user_is_no_superuser(self):
+        conditions = self._create_condition('is_superuser', [(INCLUDE, True)])
+        user = self.User(is_superuser=False)
+        assert not self.condition_set.is_active(user, conditions)
+
+    def test_user_date_joined_after(self):
+        conditions = self._create_condition('date_joined', [(INCLUDE, self.date_str)])
+        user = self.User(date_joined=self.tomorrow)
+        assert self.condition_set.is_active(user, conditions) is True
+
+    def test_user_date_joined_before(self):
+        conditions = self._create_condition('date_joined', [(INCLUDE, self.date_str)])
+        user = self.User(date_joined=self.yesterday)
+        assert not self.condition_set.is_active(user, conditions)
+
+    def test_user_in_percent_range(self):
+        conditions = self._create_condition('percent', [(INCLUDE, '0-50')])
+        user = self.User(id=25)
+        assert self.condition_set.is_active(user, conditions) is True
+
+    def test_user_out_percent_range(self):
+        conditions = self._create_condition('percent', [(INCLUDE, '0-50')])
+        user = self.User(id=75)
+        assert not self.condition_set.is_active(user, conditions)
+
+    def test_user_is_anonymous(self):
+        conditions = self._create_condition('is_anonymous', [(INCLUDE, True)])
+        user = AnonymousUser()
+        assert self.condition_set.is_active(user, conditions) is True
+
+    def test_user_is_not_anonymous(self):
+        conditions = self._create_condition('is_anonymous', [(INCLUDE, True)])
+        user = self.User(id=75)
+        assert not self.condition_set.is_active(user, conditions)
