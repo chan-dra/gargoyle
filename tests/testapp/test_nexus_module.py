@@ -79,6 +79,38 @@ class NexusModuleTestCase(TestCase):
         assert body['success'] is True
         assert body['data']['key'] == 'key1'
         assert len(body['data']['conditions']) == 1
+        name, value, field_value, exclude, condition_type = body['data']['conditions'][0]['conditions'][0]
+        assert name == 'ip_address'
+        assert value == '1.1.1.1'
+        assert field_value == '1.1.1.1'
+        assert exclude is False
+        assert condition_type == 'f'
+
+    def test_add_ab_test_condition(self):
+        switch = Switch.objects.create(key='key1')
+        conditions = list(switch.get_active_conditions(gargoyle))
+        assert len(conditions) == 0
+        resp = self.client.post(
+            '/nexus/gargoyle/conditions/add/',
+            {
+                'key': 'key1',
+                'id': 'gargoyle.builtins.IPAddressConditionSet',
+                'field': 'ip_address',
+                'ip_address': '1.1.1.1',
+                'is_ab_test': '1',
+            },
+        )
+        assert resp.status_code == 200
+        body = json.loads(resp.content.decode('utf-8'))
+        assert body['success'] is True
+        assert body['data']['key'] == 'key1'
+        assert len(body['data']['conditions']) == 1
+        name, value, field_value, exclude, condition_type = body['data']['conditions'][0]['conditions'][0]
+        assert name == 'ip_address'
+        assert value == '1.1.1.1'
+        assert field_value == '1.1.1.1'
+        assert exclude is False
+        assert condition_type == 't'
 
     def test_remove_condition(self):
         switch = Switch.objects.create(key='key1')

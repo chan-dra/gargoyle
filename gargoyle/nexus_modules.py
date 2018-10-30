@@ -18,6 +18,7 @@ from django.utils import six
 
 from gargoyle import gargoyle, signals
 from gargoyle.conditions import ValidationError
+from gargoyle.constants import AB_TEST, FEATURE
 from gargoyle.helpers import dumps
 from gargoyle.models import DISABLED, Switch
 
@@ -243,6 +244,8 @@ class GargoyleModule(nexus.NexusModule):
         condition_set_id = request.POST.get("id")
         field_name = request.POST.get("field")
         exclude = int(request.POST.get("exclude") or 0)
+        is_ab_test = bool(int(request.POST.get("is_ab_test") or 0))
+        condition_type = AB_TEST if is_ab_test else FEATURE
 
         if not all([key, condition_set_id, field_name]):
             raise GargoyleException("Fields cannot be empty")
@@ -251,7 +254,7 @@ class GargoyleModule(nexus.NexusModule):
         value = field.validate(request.POST)
 
         switch = gargoyle[key]
-        switch.add_condition(condition_set_id, field_name, value, exclude=exclude)
+        switch.add_condition(condition_set_id, field_name, value, exclude=exclude, condition_type=condition_type)
 
         logger.info('Condition added to %r (%r, %s=%r, exclude=%r)' % (switch.key,
                     condition_set_id, field_name, value, bool(exclude)))
