@@ -7,3 +7,7 @@ INHERIT = 4
 
 INCLUDE = 'i'
 EXCLUDE = 'e'
+
+# Condition types
+FEATURE = 'f'
+AB_TEST = 't'
