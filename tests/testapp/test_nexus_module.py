@@ -90,6 +90,7 @@ class NexusModuleTestCase(TestCase):
         switch = Switch.objects.create(key='key1')
         conditions = list(switch.get_active_conditions(gargoyle))
         assert len(conditions) == 0
+
         resp = self.client.post(
             '/nexus/gargoyle/conditions/add/',
             {

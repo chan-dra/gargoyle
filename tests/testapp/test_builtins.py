@@ -10,11 +10,13 @@ from django.test import RequestFactory, TestCase
 from django.test.utils import override_settings
 from django.utils import timezone
 from freezegun import freeze_time
+
 from gargoyle.builtins import (
-    ActiveTimezoneTodayConditionSet, AppTodayConditionSet, HostConditionSet,
-    IPAddressConditionSet, UTCTodayConditionSet, UserConditionSet,
+    ActiveTimezoneTodayConditionSet, AppTodayConditionSet, ConditionSet, HostConditionSet, IPAddressConditionSet,
+    UserConditionSet, UTCTodayConditionSet,
 )
-from gargoyle.constants import INCLUDE
+from gargoyle.conditions import Field
+from gargoyle.constants import AB_TEST, FEATURE, INCLUDE
 from gargoyle.manager import SwitchManager
 from gargoyle.models import SELECTIVE, Switch
 
@@ -263,7 +265,7 @@ class UserConditionSetTests(TestCase):
     def _create_condition(self, name, condition):
         """
         :param name: string
-        :param condition: tuple (status, condition, [cond_type])
+        :param condition: tuple (status, condition, [condition_type])
         :return:
         """
         conditions = {}
@@ -349,3 +351,63 @@ class UserConditionSetTests(TestCase):
         conditions = self._create_condition('is_anonymous', [(INCLUDE, True)])
         user = self.User(id=75)
         assert not self.condition_set.is_active(user, conditions)
+
+
+class ConditionSetABTestTests(TestCase):
+    def _create_instance(self):
+        """ Returns an empty object which can get new fields in execution time """
+        return type(str(""), (), {})
+
+    def _create_contitions(self, conditions):
+        """
+        :param conditions = {'field_1: [tuple_condition_1, ..., tuple_condition_n],
+                              field_2: [tuple_condition_1, ..., tuple_condition_m]
+                              ...
+                            }
+        :return: {namespace: conditions}
+        """
+        namespace = self.condition_set.get_namespace()
+        return dict([(namespace, conditions)])
+
+    def setUp(self):
+        self.condition_set = ConditionSet()
+        self.condition_set.fields = {"field_ab_test": Field(), "field_feature": Field()}
+        self.conditions = self._create_contitions({'field_ab_test': [('i', True, AB_TEST)],
+                                                   'field_feature': [('i', True, FEATURE)],
+                                                   })
+
+    def test_is_only_ab_test_enabled(self):
+        instance = self._create_instance()
+        instance.field_ab_test = True
+        instance.field_feature = False
+        assert self.condition_set.is_active(instance, self.conditions, switch_type=AB_TEST) is True
+        assert not self.condition_set.is_active(instance, self.conditions, switch_type=FEATURE)
+
+    def test_is_only_feature_enabled(self):
+        instance = self._create_instance()
+        instance.field_ab_test = False
+        instance.field_feature = True
+        assert not self.condition_set.is_active(instance, self.conditions, switch_type=AB_TEST)
+        assert self.condition_set.is_active(instance, self.conditions, switch_type=FEATURE) is True
+
+    def test_both_feature_and_ab_test_are_enabled(self):
+        instance = self._create_instance()
+        instance.field_ab_test = True
+        instance.field_feature = True
+        assert self.condition_set.is_active(instance, self.conditions, switch_type=AB_TEST) is True
+        assert self.condition_set.is_active(instance, self.conditions, switch_type=FEATURE) is True
+
+    def test_neither_feature_nor_ab_test_are_enabled(self):
+        instance = self._create_instance()
+        instance.field_ab_test = False
+        instance.field_feature = False
+        assert not self.condition_set.is_active(instance, self.conditions, switch_type=AB_TEST)
+        assert not self.condition_set.is_active(instance, self.conditions, switch_type=FEATURE)
+
+    def test_is_ab_test_enabled_with_some_ab_test_condition_disabled(self):
+        condition_set = ConditionSet()
+        condition_set.fields = {"field_1": Field()}
+        conditions = self._create_contitions({'field_1': [('i', True, AB_TEST), ('i', False, AB_TEST)]})
+        instance = self._create_instance()
+        instance.field_1 = True
+        assert condition_set.is_active(instance, conditions, switch_type=AB_TEST) is True
