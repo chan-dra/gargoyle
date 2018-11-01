@@ -16,6 +16,7 @@ from django.http import HttpRequest
 from django.utils import six
 from django.utils.html import format_html
 
+from gargoyle.constants import FEATURE
 from gargoyle.models import EXCLUDE
 
 
@@ -280,34 +281,57 @@ class ConditionSet(six.with_metaclass(ConditionSetBase)):
             value = value()
         return value
 
-    def has_active_condition(self, conditions, instances):
+    def has_active_condition(self, conditions, instances, switch_type=FEATURE):
         """
         Given a list of instances, and the conditions active for
-        this switch, returns a boolean reprsenting if any
+        this switch and ``switch type``, returns a boolean representing if any
         conditional is met, including a non-instance default.
         """
         return_value = None
+
         for instance in itertools.chain(instances, [None]):
             if not self.can_execute(instance):
                 continue
-            result = self.is_active(instance, conditions)
+
+            # This "if" is to keep backwards compatibility.
+            # If 'is_active' has been extended in a condition set before adding AB_TEST capabilities
+            # most likely the signature of that method does not contain the "switch_type" parameter.
+            if switch_type == FEATURE:
+                result = self.is_active(instance, conditions)
+            else:
+                result = self.is_active(instance, conditions, switch_type)
+
             if result is False:
                 return False
             elif result is True:
                 return_value = True
         return return_value
 
-    def is_active(self, instance, conditions):
+    def is_active(self, instance, conditions, switch_type=FEATURE):
         """
         Given an instance, and the conditions active for this switch, returns
         a boolean representing if the feature is active.
+
+        Conditions with type different from ``switch_type`` are ignored.
+        Example:
+          We want to check if a ConditionSet has some condition active for AB_TEST.
+          In this case all the conditions with type FEATURE are ignored.
         """
         return_value = None
         for name, field in six.iteritems(self.fields):
             field_conditions = conditions.get(self.get_namespace(), {}).get(name)
             if field_conditions:
                 value = self.get_field_value(instance, name)
-                for status, condition, condition_type in field_conditions:
+                for field_condition in field_conditions:
+                    status = field_condition[0]
+                    condition = field_condition[1]
+                    # Backwards compatibility: Conditions created before the AB_TEST feature was added
+                    # only have `status` and `condition`. In this case `condition_type` is default
+                    # to FEATURE which is the previous behaviour
+                    condition_type = FEATURE if len(field_condition) < 3 else field_condition[2]
+
+                    if switch_type != condition_type:  # Ignore condition with no switch type
+                        continue
                     exclude = status == EXCLUDE
                     if field.is_active(condition, value):
                         if exclude:

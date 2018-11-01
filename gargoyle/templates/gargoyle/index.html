@@ -64,7 +64,6 @@
                         {% for group in switch.conditions %}
                             <div class="group">
                                 <label>{{ group.label }}</label>
-                                <label>{{ group.label }}</label>
                                 {% for field, value, display, is_exclude, condition_type in group.conditions %}
                                     {%  if condition_type == 't' %}
                                         <span style="background: green" class="value">A/B TEST</span>
