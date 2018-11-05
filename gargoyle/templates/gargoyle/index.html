@@ -244,7 +244,7 @@
                 <div class="fields" data-path="{{ id }}.{{ field.name }}" style="display:none;">
                     <form action="" method="get" data-switch="{{ id }}" data-field="{{ field.name }}">
                         {{ field|render_field }}
-                        <label><input type="checkbox" name="is_ab_test" value="1"/>
+                        <label><input type="checkbox" name="is_ab_test" value="1"/>A/B Test</label>
                         <label><input type="checkbox" name="exclude" value="1"/> Exclude</label>
                         <button type="submit" class="small button">Add</button>
                         {% if field.help_text %}
