@@ -180,7 +180,7 @@ class GargoyleModule(nexus.NexusModule):
             switch.label = label
             switch.description = request.POST.get("desc")
             switch.save()
-
+            switch.refresh_from_db()
             logger.info('Switch %r updated %%s' % switch.key,
                         ', '.join('%s=%r->%r' % (k, v[0], v[1]) for k, v in sorted(six.iteritems(changes))))
 
@@ -208,6 +208,7 @@ class GargoyleModule(nexus.NexusModule):
         if switch.status != status:
             switch.status = status
             switch.save()
+            switch.refresh_from_db()
 
             logger.info('Switch %r updated (status=%%s->%%s)' % switch.key,
                         old_status_label, switch.get_status_display())
@@ -251,7 +252,9 @@ class GargoyleModule(nexus.NexusModule):
         value = field.validate(request.POST)
 
         switch = gargoyle[key]
+        switch.refresh_from_db()
         switch.add_condition(condition_set_id, field_name, value, exclude=exclude)
+        switch.refresh_from_db()
 
         logger.info('Condition added to %r (%r, %s=%r, exclude=%r)' % (switch.key,
                     condition_set_id, field_name, value, bool(exclude)))
@@ -280,7 +283,9 @@ class GargoyleModule(nexus.NexusModule):
             raise GargoyleException("Fields cannot be empty")
 
         switch = gargoyle[key]
+        switch.refresh_from_db()
         switch.remove_condition(condition_set_id, field_name, value)
+        switch.refresh_from_db()
 
         logger.info('Condition removed from %r (%r, %s=%r)' % (switch.key,
                     condition_set_id, field_name, value))
