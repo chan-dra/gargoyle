@@ -206,6 +206,7 @@ class GargoyleModule(nexus.NexusModule):
         old_status_label = switch.get_status_display()
 
         if switch.status != status:
+            switch.refresh_from_db()
             switch.status = status
             switch.save()
             switch.refresh_from_db()
